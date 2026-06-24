@@ -9,15 +9,20 @@ export function Search() {
   const router = useRouter()
   const [query, setQuery] = useState("")
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hasSearched = useRef(false)
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
 
     const trimmed = query.trim()
     if (!trimmed) {
-      router.push("/")
+      if (hasSearched.current) {
+        router.push("/")
+      }
       return
     }
+
+    hasSearched.current = true
 
     timerRef.current = setTimeout(() => {
       router.push(`/?search=${encodeURIComponent(trimmed)}`)

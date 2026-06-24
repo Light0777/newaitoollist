@@ -31,6 +31,14 @@ export const metadata: Metadata = {
     title: "newaitoollist.com - Discover New AI Tools",
     description:
       "Discover the latest AI tools for every task. Browse, search, and find the perfect AI tool for your needs.",
+    images: [
+      {
+        url: `${baseUrl}/opengraph-image`,
+        width: 1200,
+        height: 630,
+        alt: "NewAIToolList",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",

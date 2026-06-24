@@ -1,10 +1,17 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
 import { requireAdmin } from "@/lib/admin"
-import type { Tool } from "@/types"
+import type { Tool, Submission } from "@/types"
 
 export interface AdminPaginatedResult {
   data: Tool[]
+  hasMore: boolean
+  nextCursor: string | null
+}
+
+export interface AdminSubmissionResult {
+  data: Submission[]
   hasMore: boolean
   nextCursor: string | null
 }
@@ -123,4 +130,147 @@ export async function deleteTool(id: string) {
   const { error } = await supabase.from("tools").delete().eq("id", id)
 
   if (error) throw new Error(error.message)
+
+  revalidatePath("/admin")
+}
+
+export async function getSubmissions(
+  cursor?: string | null,
+  status?: string
+): Promise<AdminSubmissionResult> {
+  const { supabase } = await requireAdmin()
+
+  const limit = 50
+  const fetchLimit = limit + 1
+
+  let offset = 0
+  if (cursor) {
+    const decoded = JSON.parse(Buffer.from(cursor, "base64").toString())
+    offset = decoded.offset
+  }
+
+  let query = supabase
+    .from("submissions")
+    .select("*")
+
+  if (status) {
+    query = query.eq("status", status)
+  }
+
+  const { data, error } = await query
+    .order("created_at", { ascending: false })
+    .range(offset, offset + fetchLimit - 1)
+
+  if (error || !data) {
+    return { data: [], hasMore: false, nextCursor: null }
+  }
+
+  const hasMore = data.length > limit
+  const items = data.slice(0, limit)
+
+  let nextCursor: string | null = null
+  if (hasMore) {
+    nextCursor = encodeCursor(offset + limit)
+  }
+
+  return { data: items, hasMore, nextCursor }
+}
+
+export async function approveSubmission(id: string) {
+  const { supabase, user } = await requireAdmin()
+
+  const { data: submission, error: fetchError } = await supabase
+    .from("submissions")
+    .select("*")
+    .eq("id", id)
+    .single()
+
+  if (fetchError || !submission) {
+    throw new Error("Submission not found.")
+  }
+
+  if (submission.status !== "pending") {
+    throw new Error("Submission is already processed.")
+  }
+
+  let slug = submission.slug
+  const { data: existing } = await supabase
+    .from("tools")
+    .select("slug")
+    .eq("slug", slug)
+    .maybeSingle()
+
+  if (existing) {
+    let counter = 2
+    while (true) {
+      const newSlug = `${slug}-${counter}`
+      const { data: dup } = await supabase
+        .from("tools")
+        .select("slug")
+        .eq("slug", newSlug)
+        .maybeSingle()
+      if (!dup) {
+        slug = newSlug
+        break
+      }
+      counter++
+    }
+  }
+
+  const { error: insertError } = await supabase.from("tools").insert({
+    name: submission.name,
+    slug,
+    description: submission.description,
+    website_url: submission.website_url,
+    category: submission.category,
+    pricing: submission.pricing,
+    tags: submission.tags,
+  })
+
+  if (insertError) throw new Error(insertError.message)
+
+  const { error: updateError } = await supabase
+    .from("submissions")
+    .update({
+      status: "approved",
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: user.id,
+    })
+    .eq("id", id)
+
+  if (updateError) throw new Error(updateError.message)
+
+  revalidatePath("/admin")
+  revalidatePath("/admin/submissions")
+}
+
+export async function rejectSubmission(id: string) {
+  const { supabase, user } = await requireAdmin()
+
+  const { data: submission, error: fetchError } = await supabase
+    .from("submissions")
+    .select("id, status")
+    .eq("id", id)
+    .single()
+
+  if (fetchError || !submission) {
+    throw new Error("Submission not found.")
+  }
+
+  if (submission.status !== "pending") {
+    throw new Error("Submission is already processed.")
+  }
+
+  const { error } = await supabase
+    .from("submissions")
+    .update({
+      status: "rejected",
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: user.id,
+    })
+    .eq("id", id)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath("/admin/submissions")
 }

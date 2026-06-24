@@ -63,7 +63,12 @@ async function runPaginatedQuery(
     .order("id", { ascending: false })
     .limit(fetchLimit)
 
-  if (error || !data) {
+  if (error) {
+    console.error("Supabase query error:", error.message)
+    return { data: [], hasMore: false, nextCursor: null }
+  }
+
+  if (!data) {
     return { data: [], hasMore: false, nextCursor: null }
   }
 

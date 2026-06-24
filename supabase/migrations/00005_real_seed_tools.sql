@@ -1,0 +1,21 @@
+-- Seed real AI tools (excluding ChatGPT which is already added)
+INSERT INTO tools (name, slug, description, website_url, category, pricing, tags) VALUES
+('Claude', 'claude', 'AI assistant by Anthropic focused on reasoning, writing, analysis, and long conversations.', 'https://claude.ai', 'productivity-ai', 'Freemium', ARRAY['chatbot', 'assistant', 'reasoning', 'writing', 'analysis']),
+('Google Gemini', 'google-gemini', 'Google AI assistant for answering questions, creating content, and multimodal tasks.', 'https://gemini.google.com', 'productivity-ai', 'Free', ARRAY['chatbot', 'assistant', 'google', 'multimodal']),
+('Perplexity', 'perplexity', 'AI-powered search engine that provides answers with web citations.', 'https://www.perplexity.ai', 'research-ai', 'Freemium', ARRAY['search', 'research', 'citations', 'knowledge']),
+('Cursor', 'cursor', 'AI-powered code editor that helps developers write, debug, and understand code faster.', 'https://cursor.com', 'coding-ai', 'Freemium', ARRAY['coding', 'editor', 'developer', 'programming']),
+('GitHub Copilot', 'github-copilot', 'AI coding assistant that helps developers write code directly inside editors.', 'https://github.com/features/copilot', 'coding-ai', 'Paid', ARRAY['coding', 'github', 'developer', 'autocomplete']),
+('Windsurf', 'windsurf', 'AI coding editor designed for AI-assisted software development workflows.', 'https://windsurf.com', 'coding-ai', 'Freemium', ARRAY['coding', 'editor', 'developer', 'agent']),
+('Midjourney', 'midjourney', 'AI image generation tool for creating high-quality artistic images from text prompts.', 'https://www.midjourney.com', 'image-ai', 'Paid', ARRAY['image generation', 'art', 'design', 'prompts']),
+('DALL-E', 'dalle', 'AI image generation model that creates images from text descriptions.', 'https://openai.com/dall-e', 'image-ai', 'Freemium', ARRAY['image generation', 'art', 'design']),
+('Stable Diffusion', 'stable-diffusion', 'Open-source AI image generation technology for creating and editing images.', 'https://stability.ai', 'image-ai', 'Free', ARRAY['image generation', 'open source', 'art']),
+('Runway', 'runway', 'AI video generation and editing platform for creators and filmmakers.', 'https://runwayml.com', 'video-ai', 'Freemium', ARRAY['video generation', 'editing', 'creators']),
+('Pika', 'pika', 'AI video creation tool that generates and edits videos from text and images.', 'https://pika.art', 'video-ai', 'Freemium', ARRAY['video generation', 'animation', 'creator']),
+('ElevenLabs', 'elevenlabs', 'AI voice generation platform for realistic speech and voice cloning.', 'https://elevenlabs.io', 'audio-ai', 'Freemium', ARRAY['voice', 'text to speech', 'audio', 'cloning']),
+('Suno', 'suno', 'AI music generator that creates songs from text prompts.', 'https://suno.com', 'audio-ai', 'Freemium', ARRAY['music', 'audio', 'generation', 'songs']),
+('Notion AI', 'notion-ai', 'AI features inside Notion for writing, summarizing, and organizing work.', 'https://www.notion.com/product/ai', 'productivity-ai', 'Paid', ARRAY['notes', 'productivity', 'writing', 'workspace']),
+('Grammarly AI', 'grammarly-ai', 'AI writing assistant for grammar correction, rewriting, and communication improvement.', 'https://www.grammarly.com', 'writing-ai', 'Freemium', ARRAY['writing', 'grammar', 'editing']),
+('Jasper AI', 'jasper-ai', 'AI marketing assistant for creating content and brand-focused copy.', 'https://www.jasper.ai', 'writing-ai', 'Paid', ARRAY['marketing', 'copywriting', 'content']),
+('Copy.ai', 'copy-ai', 'AI writing platform for marketing content and business workflows.', 'https://www.copy.ai', 'writing-ai', 'Freemium', ARRAY['copywriting', 'marketing', 'content']),
+('GitHub Spark', 'github-spark', 'AI tool for building applications from natural language prompts.', 'https://github.com/features/spark', 'ai-agents', 'Free Trial', ARRAY['app builder', 'coding', 'no code', 'agents']),
+('AutoGPT', 'autogpt', 'Open-source autonomous AI agent framework for experimenting with AI agents.', 'https://github.com/Significant-Gravitas/AutoGPT', 'ai-agents', 'Free', ARRAY['agents', 'automation', 'open source']);

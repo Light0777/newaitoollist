@@ -9,6 +9,14 @@ import { ToolIcon } from "@/components/tool-icon"
 import { ExternalLink, ArrowLeft, Calendar } from "lucide-react"
 import { getToolBySlug } from "@/actions/tools"
 
+function formatCategory(slug: string): string {
+  return slug
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
+    .replace(/\bAi\b/g, "AI")
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -18,15 +26,36 @@ export async function generateMetadata({
   const tool = await getToolBySlug(slug)
 
   if (!tool) {
-    return { title: "Tool not found - newaitoollist.com" }
+    return { title: "Tool not found | NewAIToolList" }
   }
 
+  const categoryDisplay = formatCategory(tool.category)
+
+  const baseUrl = "https://newaitoollist.com"
+
   return {
-    title: `${tool.name} - newaitoollist.com`,
-    description: tool.description,
+    title: `${tool.name} - ${categoryDisplay} | NewAIToolList`,
+    description: `Discover ${tool.name}, an ${categoryDisplay.toLowerCase()} tool. ${tool.description}`,
     openGraph: {
-      title: `${tool.name} - AI Tool`,
-      description: tool.description,
+      title: `${tool.name} - ${categoryDisplay} | NewAIToolList`,
+      description: `Discover ${tool.name}, an ${categoryDisplay.toLowerCase()} tool. ${tool.description}`,
+      type: "article",
+      publishedTime: tool.created_at,
+      tags: tool.tags,
+      images: [
+        {
+          url: `${baseUrl}/tools/${tool.slug}/opengraph-image`,
+          width: 1200,
+          height: 630,
+          alt: tool.name,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${tool.name} - ${categoryDisplay} | NewAIToolList`,
+      description: `Discover ${tool.name}, an ${categoryDisplay.toLowerCase()} tool. ${tool.description}`,
+      images: [`${baseUrl}/tools/${tool.slug}/opengraph-image`],
     },
   }
 }
@@ -72,7 +101,7 @@ export default async function ToolPage({
           </p>
 
           <div className="flex flex-wrap gap-2 mb-6">
-            <Badge variant="secondary">{tool.category}</Badge>
+            <Badge variant="secondary">{formatCategory(tool.category)}</Badge>
             <Badge variant="outline">{tool.pricing}</Badge>
           </div>
 

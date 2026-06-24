@@ -9,7 +9,7 @@ import {
 import { requireAdmin } from "@/lib/admin"
 import { getAdminTools } from "@/actions/admin"
 import { AdminToolList } from "@/components/admin-tool-list"
-import { Plus } from "lucide-react"
+import { Plus, Inbox } from "lucide-react"
 
 export default async function AdminPage() {
   const { user } = await requireAdmin()
@@ -27,6 +27,12 @@ export default async function AdminPage() {
         <div className="flex flex-wrap items-center gap-2">
           <Link href="/">
             <Button variant="outline" size="sm">View Site</Button>
+          </Link>
+          <Link href="/admin/submissions">
+            <Button variant="secondary" size="sm">
+              <Inbox className="h-4 w-4 mr-1" />
+              Submissions
+            </Button>
           </Link>
           <Link href="/admin/tools/new">
             <Button size="sm">

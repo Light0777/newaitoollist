@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 export function Header() {
   return (
@@ -7,7 +8,11 @@ export function Header() {
         <Link href="/" className="text-xl font-bold tracking-tight">
           newaitoollist.com
         </Link>
-        <div />
+        <Link href="/submit" className="hidden lg:block">
+          <Button variant="outline" size="sm">
+            Submit Tool
+          </Button>
+        </Link>
       </div>
     </header>
   )

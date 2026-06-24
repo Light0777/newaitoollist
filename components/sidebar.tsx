@@ -66,6 +66,15 @@ export function Sidebar({ categories }: { categories: Category[] }) {
               </button>
             </div>
             {content}
+            <div className="pt-4 border-t mt-6">
+              <a
+                href="/submit"
+                onClick={() => setOpen(false)}
+                className="flex items-center justify-center w-full px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/80 transition-colors"
+              >
+                Submit Tool
+              </a>
+            </div>
           </div>
         </div>
       )}

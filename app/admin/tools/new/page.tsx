@@ -10,7 +10,7 @@ export default async function NewToolPage() {
   const categories = await getCategories()
 
   return (
-    <div className="min-h-screen p-4 md:p-8 max-w-3xl mx-auto">
+    <div className="container mx-auto px-4 py-8 max-w-3xl">
       <Link
         href="/admin"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6"
@@ -19,7 +19,10 @@ export default async function NewToolPage() {
         Back to dashboard
       </Link>
 
-      <h1 className="text-2xl font-bold mb-6">Add New Tool</h1>
+      <h1 className="text-3xl font-bold mb-2">Add New Tool</h1>
+      <p className="text-muted-foreground mb-8">
+        Add a new AI tool to the directory.
+      </p>
 
       <ToolForm
         categories={categories}

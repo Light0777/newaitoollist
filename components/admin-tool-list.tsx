@@ -4,6 +4,14 @@ import { useState, useCallback } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { getAdminTools, deleteTool } from "@/actions/admin"
 import { ExternalLink, Edit, Trash2 } from "lucide-react"
 import type { Tool } from "@/types"
@@ -47,6 +55,18 @@ export function AdminToolList({
     }
   }, [loading, hasMore, cursor])
 
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  const handleDelete = useCallback(async (id: string) => {
+    setError(null)
+    try {
+      await deleteTool(id)
+      setTools((prev) => prev.filter((t) => t.id !== id))
+    } catch {
+      setError("Failed to delete tool.")
+    }
+  }, [])
+
   if (tools.length === 0) {
     return (
       <p className="text-muted-foreground text-center py-8">
@@ -85,15 +105,14 @@ export function AdminToolList({
                   <Edit className="h-4 w-4" />
                 </Button>
               </Link>
-              <form action={deleteTool.bind(null, tool.id)}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </form>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-destructive hover:text-destructive"
+                onClick={() => setDeletingId(tool.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         ))}
@@ -116,6 +135,38 @@ export function AdminToolList({
           </Button>
         </div>
       )}
+
+      <Dialog
+        open={!!deletingId}
+        onOpenChange={(open) => { if (!open) setDeletingId(null) }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Tool</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete{" "}
+              <strong>
+                {tools.find((t) => t.id === deletingId)?.name}
+              </strong>
+              ? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeletingId(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (deletingId) handleDelete(deletingId)
+                setDeletingId(null)
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

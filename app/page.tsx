@@ -22,6 +22,7 @@ async function ToolsGridContent({
     )
     return (
       <ToolGridWithLoadMore
+        key={`search-${searchQuery}`}
         initialTools={data}
         initialHasMore={hasMore}
         initialCursor={nextCursor}
@@ -35,6 +36,7 @@ async function ToolsGridContent({
   const { data, hasMore, nextCursor } = await getLatestTools(20, null, period)
   return (
     <ToolGridWithLoadMore
+      key="home"
       initialTools={data}
       initialHasMore={hasMore}
       initialCursor={nextCursor}
