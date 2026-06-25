@@ -10,6 +10,7 @@ import { SimilarTools } from "@/components/similar-tools"
 import { TrackCategoryView } from "@/components/track-category"
 import { ExternalLink, ArrowLeft, Calendar } from "lucide-react"
 import { getToolBySlug, getSimilarTools } from "@/actions/tools"
+import type { Tool } from "@/types"
 
 function formatCategory(slug: string): string {
   return slug
@@ -74,9 +75,11 @@ export default async function ToolPage({
     notFound()
   }
 
-  let similarTools: Awaited<ReturnType<typeof getSimilarTools>> = []
-  if (tool.embedding_status === "done") {
-    similarTools = await getSimilarTools(tool.id)
+  let similarTools: Tool[] = []
+  try {
+    similarTools = await getSimilarTools(tool.id, tool.category)
+  } catch {
+    // silently ignore
   }
 
   return (

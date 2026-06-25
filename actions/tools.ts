@@ -177,22 +177,36 @@ export async function getToolBySlug(slug: string): Promise<Tool | null> {
 
 export async function getSimilarTools(
   toolId: string,
+  category: string,
   limit = 6
 ): Promise<Tool[]> {
   const supabase = getClient()
   if (!supabase) return []
 
+  // Try embedding-based similarity first
   const { data, error } = await supabase.rpc("find_similar_tools", {
     p_tool_id: toolId,
     p_limit: limit,
   })
 
-  if (error) {
-    console.error("getSimilarTools RPC error:", error.message)
-    return []
+  if (!error && data && data.length > 0) {
+    return data as Tool[]
   }
 
-  return (data as Tool[]) || []
+  if (error) {
+    console.error("getSimilarTools RPC error:", error.message)
+  }
+
+  // Fallback: same category, newest first
+  const { data: categoryTools } = await supabase
+    .from("tools")
+    .select("id, name, slug, description, website_url, category, pricing, tags, logo_url, created_at, embedding_status")
+    .eq("category", category)
+    .neq("id", toolId)
+    .order("created_at", { ascending: false })
+    .limit(limit)
+
+  return (categoryTools as Tool[]) || []
 }
 
 export async function getAllToolSlugsForSitemap(): Promise<
