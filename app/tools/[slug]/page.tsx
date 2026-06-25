@@ -9,7 +9,7 @@ import { ToolIcon } from "@/components/tool-icon"
 import { SimilarTools } from "@/components/similar-tools"
 import { TrackCategoryView } from "@/components/track-category"
 import { ExternalLink, ArrowLeft, Calendar } from "lucide-react"
-import { getToolBySlug, getToolEmbedding, getSimilarTools } from "@/actions/tools"
+import { getToolBySlug, getSimilarTools } from "@/actions/tools"
 
 function formatCategory(slug: string): string {
   return slug
@@ -76,10 +76,7 @@ export default async function ToolPage({
 
   let similarTools: Awaited<ReturnType<typeof getSimilarTools>> = []
   if (tool.embedding_status === "done") {
-    const embedding = await getToolEmbedding(tool.id)
-    if (embedding) {
-      similarTools = await getSimilarTools(tool.id, embedding)
-    }
+    similarTools = await getSimilarTools(tool.id)
   }
 
   return (

@@ -7,7 +7,6 @@ CREATE INDEX IF NOT EXISTS idx_tools_embedding ON tools USING ivfflat (embedding
 
 CREATE OR REPLACE FUNCTION find_similar_tools(
   p_tool_id UUID,
-  p_embedding TEXT,
   p_limit INT DEFAULT 6
 )
 RETURNS TABLE(
@@ -25,7 +24,12 @@ RETURNS TABLE(
 )
 LANGUAGE plpgsql
 AS $$
+DECLARE
+  v_embedding vector(768);
 BEGIN
+  SELECT t.embedding INTO v_embedding FROM tools t WHERE t.id = p_tool_id;
+  IF v_embedding IS NULL THEN RETURN; END IF;
+
   RETURN QUERY
   SELECT
     t.id,
@@ -43,7 +47,7 @@ BEGIN
   WHERE t.id != p_tool_id
     AND t.embedding_status = 'done'
     AND t.embedding IS NOT NULL
-  ORDER BY t.embedding <=> p_embedding::vector
+  ORDER BY t.embedding <=> v_embedding
   LIMIT p_limit;
 END;
 $$;
