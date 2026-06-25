@@ -179,14 +179,18 @@ export async function getToolEmbedding(toolId: string): Promise<number[] | null>
   const supabase = getClient()
   if (!supabase) return null
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("tools")
     .select("embedding")
     .eq("id", toolId)
     .single()
 
-  if (!data || !data.embedding) return null
-  return data.embedding as number[]
+  if (error || !data || !data.embedding) return null
+
+  const raw = data.embedding
+  if (Array.isArray(raw)) return raw as number[]
+  if (typeof raw === "string") return JSON.parse(raw) as number[]
+  return null
 }
 
 export async function getSimilarTools(
@@ -197,11 +201,18 @@ export async function getSimilarTools(
   const supabase = getClient()
   if (!supabase) return []
 
-  const { data } = await supabase.rpc("find_similar_tools", {
+  const vectorStr = `[${embedding.join(",")}]`
+
+  const { data, error } = await supabase.rpc("find_similar_tools", {
     p_tool_id: toolId,
-    p_embedding: embedding,
+    p_embedding: vectorStr,
     p_limit: limit,
   })
+
+  if (error) {
+    console.error("getSimilarTools RPC error:", error.message)
+    return []
+  }
 
   return (data as Tool[]) || []
 }
