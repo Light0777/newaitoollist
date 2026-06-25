@@ -47,7 +47,7 @@ export default async function CategoryPage({
     notFound()
   }
 
-  const { data, hasMore, nextCursor } = await getToolsByCategory(slug, 20)
+  const { data, hasMore, nextCursor } = await getToolsByCategory(slug, 12)
 
   return (
     <>

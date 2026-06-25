@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { requireAdmin } from "@/lib/admin"
+import { processToolEmbedding } from "@/lib/embedding"
 import type { Tool, Submission } from "@/types"
 
 export interface AdminPaginatedResult {
@@ -86,21 +87,20 @@ export async function createTool(formData: FormData): Promise<ActionResult> {
     .map((t) => t.trim())
     .filter(Boolean)
 
-  const { error } = await supabase.from("tools").insert({
-    name,
-    slug,
-    description,
-    website_url,
-    category,
-    pricing,
-    tags,
-  })
+  const { data: inserted, error } = await supabase
+    .from("tools")
+    .insert({ name, slug, description, website_url, category, pricing, tags })
+    .select("id")
 
   if (error) {
     if (error.message.includes("duplicate key") && error.message.includes("tools_slug_key")) {
       return { success: false, error: "A tool with this slug already exists." }
     }
     return { success: false, error: "Something went wrong. Please try again." }
+  }
+
+  if (inserted?.[0]?.id) {
+    processToolEmbedding(inserted[0].id, name, description, category).catch(console.error)
   }
 
   revalidatePath("/admin")
@@ -241,15 +241,18 @@ export async function approveSubmission(id: string) {
     }
   }
 
-  const { error: insertError } = await supabase.from("tools").insert({
-    name: submission.name,
-    slug,
-    description: submission.description,
-    website_url: submission.website_url,
-    category: submission.category,
-    pricing: submission.pricing,
-    tags: submission.tags,
-  })
+  const { data: inserted, error: insertError } = await supabase
+    .from("tools")
+    .insert({
+      name: submission.name,
+      slug,
+      description: submission.description,
+      website_url: submission.website_url,
+      category: submission.category,
+      pricing: submission.pricing,
+      tags: submission.tags,
+    })
+    .select("id")
 
   if (insertError) {
     if (
@@ -271,6 +274,15 @@ export async function approveSubmission(id: string) {
     .eq("id", id)
 
   if (updateError) throw new Error(updateError.message)
+
+  if (inserted?.[0]?.id) {
+    processToolEmbedding(
+      inserted[0].id,
+      submission.name,
+      submission.description,
+      submission.category
+    ).catch(console.error)
+  }
 
   revalidatePath("/admin")
   revalidatePath("/admin/submissions")

@@ -5,14 +5,27 @@ import { Button } from "@/components/ui/button"
 import { ToolIcon } from "@/components/tool-icon"
 import type { Tool } from "@/types"
 
+function isNew(createdAt: string): boolean {
+  const age = Date.now() - new Date(createdAt).getTime()
+  return age < 24 * 60 * 60 * 1000
+}
+
 export function ToolCard({ tool }: { tool: Tool }) {
+  const showNewBadge = isNew(tool.created_at)
   return (
     <Card className="flex flex-col h-full">
       <CardContent className="flex-1 pt-6">
         <div className="flex items-start gap-3 mb-3">
           <ToolIcon websiteUrl={tool.website_url} name={tool.name} />
           <div className="min-w-0">
-            <h3 className="font-semibold truncate">{tool.name}</h3>
+            <h3 className="font-semibold truncate flex items-center gap-2">
+              {tool.name}
+              {showNewBadge && (
+                <span className="inline-flex items-center rounded-full bg-green-600 px-2 py-0.5 text-[10px] font-semibold leading-none text-white">
+                  New
+                </span>
+              )}
+            </h3>
             <p className="text-xs text-muted-foreground">
               Added {new Date(tool.created_at).toLocaleDateString("en-US")}
             </p>

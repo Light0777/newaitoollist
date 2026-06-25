@@ -168,11 +168,42 @@ export async function getToolBySlug(slug: string): Promise<Tool | null> {
 
   const { data } = await supabase
     .from("tools")
-    .select("*")
+    .select("id, name, slug, description, website_url, category, pricing, tags, logo_url, created_at, embedding_status")
     .eq("slug", slug)
     .single()
 
-  return data
+  return data as Tool | null
+}
+
+export async function getToolEmbedding(toolId: string): Promise<number[] | null> {
+  const supabase = getClient()
+  if (!supabase) return null
+
+  const { data } = await supabase
+    .from("tools")
+    .select("embedding")
+    .eq("id", toolId)
+    .single()
+
+  if (!data || !data.embedding) return null
+  return data.embedding as number[]
+}
+
+export async function getSimilarTools(
+  toolId: string,
+  embedding: number[],
+  limit = 6
+): Promise<Tool[]> {
+  const supabase = getClient()
+  if (!supabase) return []
+
+  const { data } = await supabase.rpc("find_similar_tools", {
+    p_tool_id: toolId,
+    p_embedding: embedding,
+    p_limit: limit,
+  })
+
+  return (data as Tool[]) || []
 }
 
 export async function getAllToolSlugsForSitemap(): Promise<

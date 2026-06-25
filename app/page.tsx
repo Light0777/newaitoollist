@@ -16,7 +16,7 @@ async function ToolsGridContent({
   if (searchQuery) {
     const { data, hasMore, nextCursor } = await searchTools(
       searchQuery,
-      20,
+      12,
       null,
       period
     )
@@ -33,7 +33,7 @@ async function ToolsGridContent({
     )
   }
 
-  const { data, hasMore, nextCursor } = await getLatestTools(20, null, period)
+  const { data, hasMore, nextCursor } = await getLatestTools(12, null, period)
   return (
     <ToolGridWithLoadMore
       key="home"

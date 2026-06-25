@@ -9,6 +9,7 @@ export interface Tool {
   tags: string[]
   logo_url: string | null
   created_at: string
+  embedding_status?: "pending" | "done" | "failed"
 }
 
 export interface Category {

@@ -6,8 +6,10 @@ import { Footer } from "@/components/footer"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ToolIcon } from "@/components/tool-icon"
+import { SimilarTools } from "@/components/similar-tools"
+import { TrackCategoryView } from "@/components/track-category"
 import { ExternalLink, ArrowLeft, Calendar } from "lucide-react"
-import { getToolBySlug } from "@/actions/tools"
+import { getToolBySlug, getToolEmbedding, getSimilarTools } from "@/actions/tools"
 
 function formatCategory(slug: string): string {
   return slug
@@ -72,6 +74,14 @@ export default async function ToolPage({
     notFound()
   }
 
+  let similarTools: Awaited<ReturnType<typeof getSimilarTools>> = []
+  if (tool.embedding_status === "done") {
+    const embedding = await getToolEmbedding(tool.id)
+    if (embedding) {
+      similarTools = await getSimilarTools(tool.id, embedding)
+    }
+  }
+
   return (
     <>
       <Header />
@@ -125,7 +135,11 @@ export default async function ToolPage({
               <ExternalLink className="h-4 w-4 ml-1" />
             </Button>
           </a>
+
+          <SimilarTools tools={similarTools} />
         </div>
+
+        <TrackCategoryView category={tool.category} />
       </main>
       <Footer />
     </>
