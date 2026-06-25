@@ -162,7 +162,7 @@ export async function submitTool(formData: FormData): Promise<SubmitResult> {
   })
 
   if (error) {
-    return { success: false, error: "Something went wrong. Please try again." }
+    return { success: false, error: "This tool appears to already exist. Please try a different name or URL." }
   }
 
   return { success: true }

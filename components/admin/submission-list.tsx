@@ -84,8 +84,8 @@ export function SubmissionList({
             : s
         )
       )
-    } catch {
-      setError("Failed to process submission.")
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to process submission.")
     } finally {
       setProcessingId(null)
       setConfirmId(null)

@@ -66,7 +66,12 @@ export async function getAdminTool(id: string): Promise<Tool | null> {
   return data
 }
 
-export async function createTool(formData: FormData) {
+export interface ActionResult {
+  success: boolean
+  error?: string
+}
+
+export async function createTool(formData: FormData): Promise<ActionResult> {
   const { supabase } = await requireAdmin()
 
   const name = formData.get("name") as string
@@ -91,10 +96,21 @@ export async function createTool(formData: FormData) {
     tags,
   })
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    if (error.message.includes("duplicate key") && error.message.includes("tools_slug_key")) {
+      return { success: false, error: "A tool with this slug already exists." }
+    }
+    return { success: false, error: "Something went wrong. Please try again." }
+  }
+
+  revalidatePath("/admin")
+  return { success: true }
 }
 
-export async function updateTool(id: string, formData: FormData) {
+export async function updateTool(
+  id: string,
+  formData: FormData
+): Promise<ActionResult> {
   const { supabase } = await requireAdmin()
 
   const name = formData.get("name") as string
@@ -122,7 +138,15 @@ export async function updateTool(id: string, formData: FormData) {
     })
     .eq("id", id)
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    if (error.message.includes("duplicate key") && error.message.includes("tools_slug_key")) {
+      return { success: false, error: "A tool with this slug already exists." }
+    }
+    return { success: false, error: "Something went wrong. Please try again." }
+  }
+
+  revalidatePath("/admin")
+  return { success: true }
 }
 
 export async function deleteTool(id: string) {
@@ -227,7 +251,15 @@ export async function approveSubmission(id: string) {
     tags: submission.tags,
   })
 
-  if (insertError) throw new Error(insertError.message)
+  if (insertError) {
+    if (
+      insertError.message.includes("duplicate key") &&
+      insertError.message.includes("tools_slug_key")
+    ) {
+      throw new Error("A tool with this name or URL already exists in the directory.")
+    }
+    throw new Error(insertError.message)
+  }
 
   const { error: updateError } = await supabase
     .from("submissions")

@@ -12,8 +12,12 @@ import { AdminToolList } from "@/components/admin-tool-list"
 import { Plus, Inbox } from "lucide-react"
 
 export default async function AdminPage() {
-  const { user } = await requireAdmin()
+  const { supabase, user } = await requireAdmin()
   const { data, hasMore, nextCursor } = await getAdminTools()
+
+  const { count } = await supabase
+    .from("tools")
+    .select("*", { count: "exact", head: true })
 
   return (
     <div className="min-h-screen p-4 md:p-8 max-w-5xl mx-auto">
@@ -48,7 +52,7 @@ export default async function AdminPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Tools</CardTitle>
+          <CardTitle>Tools {count !== null && <span className="text-muted-foreground font-normal text-lg">({count})</span>}</CardTitle>
         </CardHeader>
         <CardContent>
           <AdminToolList

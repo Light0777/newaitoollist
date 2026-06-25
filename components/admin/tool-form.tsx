@@ -1,10 +1,13 @@
 "use client"
 
+import { useActionState } from "react"
 import { useFormStatus } from "react-dom"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { Tool, Category } from "@/types"
+import type { ActionResult } from "@/actions/admin"
 
 function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus()
@@ -23,11 +26,36 @@ export function ToolForm({
 }: {
   categories: Category[]
   tool?: Tool | null
-  action: (formData: FormData) => Promise<void>
+  action: (formData: FormData) => Promise<ActionResult>
   submitLabel: string
 }) {
+  const router = useRouter()
+
+  const wrappedAction = async (
+    _prev: ActionResult | null,
+    formData: FormData
+  ): Promise<ActionResult> => {
+    return action(formData)
+  }
+
+  const [state, formAction] = useActionState(wrappedAction, null)
+
+  if (state?.success) {
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-2xl font-bold mb-2">Tool Saved</h2>
+        <p className="text-muted-foreground mb-4">
+          The tool has been saved successfully.
+        </p>
+        <Button onClick={() => router.push("/admin")}>
+          Back to Dashboard
+        </Button>
+      </div>
+    )
+  }
+
   return (
-    <form action={action} className="space-y-6 max-w-lg">
+    <form action={formAction} className="space-y-6 max-w-lg">
       <div className="space-y-2">
         <Label htmlFor="name">Name</Label>
         <Input
@@ -99,7 +127,7 @@ export function ToolForm({
           id="pricing"
           name="pricing"
           defaultValue={tool?.pricing || "Free"}
-          className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option>Free</option>
           <option>Freemium</option>
@@ -118,6 +146,10 @@ export function ToolForm({
           placeholder="e.g. chat, gpt, writing"
         />
       </div>
+
+      {state && !state.success && state.error && (
+        <p className="text-sm text-destructive">{state.error}</p>
+      )}
 
       <SubmitButton label={submitLabel} />
     </form>
