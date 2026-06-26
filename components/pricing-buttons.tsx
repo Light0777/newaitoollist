@@ -2,25 +2,20 @@
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { PRICING_MAP } from "@/lib/pricing"
 
-const periods = [
-  { value: "today", label: "Today" },
-  { value: "week", label: "This Week" },
-  { value: "month", label: "This Month" },
-] as const
-
-export function FilterButtons() {
+export function PricingButtons() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const active = searchParams.get("period") || ""
+  const active = searchParams.get("pricing") || ""
 
-  function setPeriod(value: string) {
+  function setPricing(value: string) {
     const params = new URLSearchParams(searchParams.toString())
     if (value) {
-      params.set("period", value)
+      params.set("pricing", value)
     } else {
-      params.delete("period")
+      params.delete("pricing")
     }
     const qs = params.toString()
     router.push(qs ? `${pathname}?${qs}` : pathname)
@@ -31,18 +26,18 @@ export function FilterButtons() {
       <Button
         variant={!active ? "default" : "outline"}
         size="sm"
-        onClick={() => setPeriod("")}
+        onClick={() => setPricing("")}
       >
-        All Time
+        All
       </Button>
-      {periods.map((p) => (
+      {Object.entries(PRICING_MAP).map(([value, label]) => (
         <Button
-          key={p.value}
-          variant={active === p.value ? "default" : "outline"}
+          key={value}
+          variant={active === value ? "default" : "outline"}
           size="sm"
-          onClick={() => setPeriod(p.value)}
+          onClick={() => setPricing(value)}
         >
-          {p.label}
+          {label}
         </Button>
       ))}
     </div>

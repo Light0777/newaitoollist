@@ -1,18 +1,22 @@
 "use client"
 
-import { useState, useCallback, useRef, useEffect } from "react"
+import { useState, useCallback, useRef, useEffect, useMemo } from "react"
+import Link from "next/link"
 import { ToolCard, ToolCardSkeleton } from "@/components/tool-card"
+import { ToolIcon } from "@/components/tool-icon"
 import { getLatestTools, searchTools, getToolsByCategory } from "@/actions/tools"
 import type { Tool } from "@/types"
 import type { PaginatedResult } from "@/actions/tools"
 
 interface ToolGridProps {
+  latestTools?: Tool[]
   initialTools: Tool[]
   initialHasMore: boolean
   initialCursor: string | null
   searchQuery?: string
   categorySlug?: string
   period?: string
+  pricing?: string
   emptyMessage?: string
 }
 
@@ -92,15 +96,23 @@ function getRecentCategories(): Set<string> {
 }
 
 export function ToolGridWithLoadMore({
+  latestTools,
   initialTools,
   initialHasMore,
   initialCursor,
   searchQuery,
   categorySlug,
   period,
+  pricing,
   emptyMessage = "No tools found.",
 }: ToolGridProps) {
-  const [tools, setTools] = useState<Tool[]>(initialTools)
+  const latestToolIds = useMemo(
+    () => new Set((latestTools || []).map((t) => t.id)),
+    [latestTools]
+  )
+  // Filter out any latestTools from initialTools to avoid duplicates
+  const filteredInitial = initialTools.filter((t) => !latestToolIds.has(t.id))
+  const [tools, setTools] = useState<Tool[]>(filteredInitial)
   const [hasMore, setHasMore] = useState(initialHasMore)
   const [cursor, setCursor] = useState<string | null>(initialCursor)
   const [loading, setLoading] = useState(false)
@@ -109,7 +121,7 @@ export function ToolGridWithLoadMore({
   const sentinelRef = useRef<HTMLDivElement>(null)
   const loadingRef = useRef(false)
   const hasMoreRef = useRef(initialHasMore)
-  const initialCountRef = useRef(initialTools.length)
+  const initialCountRef = useRef(filteredInitial.length)
   const generationRef = useRef(0)
 
   const handleLoadMore = useCallback(async () => {
@@ -123,11 +135,11 @@ export function ToolGridWithLoadMore({
     try {
       let result: PaginatedResult<Tool>
       if (categorySlug) {
-        result = await getToolsByCategory(categorySlug, 12, cursor)
+        result = await getToolsByCategory(categorySlug, 9999, cursor, pricing, period)
       } else if (searchQuery) {
-        result = await searchTools(searchQuery, 12, cursor, period)
+        result = await searchTools(searchQuery, 9999, cursor, period, pricing)
       } else {
-        result = await getLatestTools(12, cursor, period)
+        result = await getLatestTools(9999, cursor, period, pricing)
       }
 
       if (gen !== generationRef.current) return
@@ -139,7 +151,10 @@ export function ToolGridWithLoadMore({
 
       setTools((prev) => {
         const existingIds = new Set(prev.map((t) => t.id))
-        const newTools = result.data.filter((t) => !existingIds.has(t.id))
+        // Also exclude latestToolIds to avoid duplicates from pagination
+        const newTools = result.data.filter(
+          (t) => !existingIds.has(t.id) && !latestToolIds.has(t.id)
+        )
         return [...prev, ...newTools]
       })
       setHasMore(result.hasMore)
@@ -152,7 +167,7 @@ export function ToolGridWithLoadMore({
       loadingRef.current = false
       setLoading(false)
     }
-  }, [cursor, searchQuery, categorySlug, period])
+  }, [cursor, searchQuery, categorySlug, period, pricing])
 
   useEffect(() => {
     const sentinel = sentinelRef.current
@@ -174,16 +189,18 @@ export function ToolGridWithLoadMore({
   // reset when filters change
   useEffect(() => {
     generationRef.current++
-    setTools(initialTools)
+    const filtered = initialTools.filter((t) => !latestToolIds.has(t.id))
+    setTools(filtered)
     setHasMore(initialHasMore)
     hasMoreRef.current = initialHasMore
     setCursor(initialCursor)
     setError(null)
     setBatchIndex(0)
-    initialCountRef.current = initialTools.length
-  }, [initialTools, initialHasMore, initialCursor, searchQuery, categorySlug, period])
+    initialCountRef.current = filtered.length
+  }, [initialTools, initialHasMore, initialCursor, searchQuery, categorySlug, period, pricing])
 
-  if (tools.length === 0 && !loading) {
+  const hasTools = (latestTools && latestTools.length > 0) || tools.length > 0
+  if (!hasTools && !loading) {
     return (
       <div className="text-center py-12 text-muted-foreground">
         {emptyMessage}
@@ -191,37 +208,76 @@ export function ToolGridWithLoadMore({
     )
   }
 
+  const restLabel = searchQuery
+    ? `Search Results`
+    : categorySlug
+      ? categorySlug
+          .split("-")
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(" ")
+          .replace(/\bAi\b/g, "AI")
+      : "All"
+
   return (
     <div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {tools.map((tool, i) => {
-          const isClientBatch = i >= initialCountRef.current
-          return (
-            <div
-              key={tool.id}
-              style={
-                isClientBatch
-                  ? {
-                      animation: `fade-up 200ms ease-out ${(i - initialCountRef.current) * 50}ms backwards`,
-                    }
-                  : undefined
-              }
-            >
-              <ToolCard tool={tool} />
-            </div>
-          )
-        })}
-        {loading &&
-          Array.from({ length: 3 }).map((_, i) => (
-            <ToolCardSkeleton key={`skel-${batchIndex}-${i}`} />
-          ))}
-      </div>
+      {latestTools && latestTools.length > 0 && (
+        <div className="mb-10 p-6 border rounded-lg">
+          <h2 className="text-2xl font-semibold mb-4">Latest AI Tools</h2>
 
-      {error && (
-        <p className="text-center text-sm text-destructive mt-4">{error}</p>
+          {/* Mobile: icons row */}
+          <div className="flex sm:hidden items-center justify-between">
+            {latestTools.map((tool) => (
+              <Link key={tool.id} href={`/tools/${tool.slug}`}>
+                <ToolIcon websiteUrl={tool.website_url} name={tool.name} size="lg" />
+              </Link>
+            ))}
+          </div>
+
+          {/* Desktop/tablet: full cards */}
+          <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {latestTools.map((tool) => (
+              <div key={tool.id}>
+                <ToolCard tool={tool} />
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
-      {hasMore && <div ref={sentinelRef} className="h-1" />}
+      {tools.length > 0 && (
+        <div>
+          <h2 className="text-2xl font-semibold mb-4">{restLabel}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {tools.map((tool, i) => {
+              const isClientBatch = i >= initialCountRef.current
+              return (
+                <div
+                  key={tool.id}
+                  style={
+                    isClientBatch
+                      ? {
+                          animation: `fade-up 200ms ease-out ${(i - initialCountRef.current) * 50}ms backwards`,
+                        }
+                      : undefined
+                  }
+                >
+                  <ToolCard tool={tool} />
+                </div>
+              )
+            })}
+            {loading &&
+              Array.from({ length: 3 }).map((_, i) => (
+                <ToolCardSkeleton key={`skel-${batchIndex}-${i}`} />
+              ))}
+          </div>
+
+          {error && (
+            <p className="text-center text-sm text-destructive mt-4">{error}</p>
+          )}
+
+          {hasMore && <div ref={sentinelRef} className="h-1" />}
+        </div>
+      )}
     </div>
   )
 }

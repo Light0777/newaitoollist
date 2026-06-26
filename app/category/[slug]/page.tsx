@@ -6,15 +6,7 @@ import { Footer } from "@/components/footer"
 import { Sidebar } from "@/components/sidebar"
 import { ToolGridWithLoadMore } from "@/components/tool-grid"
 import { ArrowLeft } from "lucide-react"
-import { getToolsByCategory, getCategories } from "@/actions/tools"
-
-function formatCategory(slug: string): string {
-  return slug
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ")
-    .replace(/\bAi\b/g, "AI")
-}
+import { getNewestTools, getToolsByCategory, getCategories } from "@/actions/tools"
 
 export async function generateMetadata({
   params,
@@ -22,7 +14,11 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const { slug } = await params
-  const categoryName = formatCategory(slug)
+  const categoryName = slug
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
+    .replace(/\bAi\b/g, "AI")
 
   return {
     title: `${categoryName} Tools | NewAIToolList`,
@@ -36,10 +32,13 @@ export async function generateMetadata({
 
 export default async function CategoryPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ pricing?: string; period?: string }>
 }) {
   const { slug } = await params
+  const { pricing, period } = await searchParams
   const categories = await getCategories()
   const category = categories.find((c) => c.slug === slug)
 
@@ -47,7 +46,8 @@ export default async function CategoryPage({
     notFound()
   }
 
-  const { data, hasMore, nextCursor } = await getToolsByCategory(slug, 12)
+  const latestTools = await getNewestTools(4)
+  const { data, hasMore, nextCursor } = await getToolsByCategory(slug, 9999, null, pricing, period)
 
   return (
     <>
@@ -71,10 +71,13 @@ export default async function CategoryPage({
 
         <ToolGridWithLoadMore
           key={slug}
+          latestTools={latestTools}
           initialTools={data}
           initialHasMore={hasMore}
           initialCursor={nextCursor}
           categorySlug={slug}
+          pricing={pricing}
+          period={period}
           emptyMessage="No tools in this category yet."
         />
           </section>

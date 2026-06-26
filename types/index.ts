@@ -10,6 +10,7 @@ export interface Tool {
   logo_url: string | null
   created_at: string
   embedding_status?: "pending" | "done" | "failed"
+  shuffle_order?: number
 }
 
 export interface Category {

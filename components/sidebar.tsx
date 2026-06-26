@@ -1,15 +1,27 @@
 "use client"
 
-import { useState } from "react"
-import { Menu, X } from "lucide-react"
+import { usePathname } from "next/navigation"
+import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Search } from "@/components/search"
 import { FilterButtons } from "@/components/filter-buttons"
+import { PricingButtons } from "@/components/pricing-buttons"
 import { CategoryButtons } from "@/components/category-buttons"
+import { useSidebar } from "@/lib/sidebar-context"
 import type { Category } from "@/types"
 
 export function Sidebar({ categories }: { categories: Category[] }) {
-  const [open, setOpen] = useState(false)
+  const { open, setOpen } = useSidebar()
+  const pathname = usePathname()
+  const isAllActive = pathname === "/"
+  const activeCategory = pathname.startsWith("/category/") ? pathname.replace("/category/", "") : null
+
+  const linkClass = (isActive: boolean) =>
+    `text-sm transition-colors px-2 py-1 rounded ${
+      isActive
+        ? "bg-primary text-primary-foreground font-medium"
+        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+    }`
 
   const content = (
     <div className="space-y-6">
@@ -20,16 +32,26 @@ export function Sidebar({ categories }: { categories: Category[] }) {
       <div>
         <h3 className="text-sm font-medium mb-2">Categories</h3>
         <div className="flex flex-col gap-1.5">
+          <a
+            href="/"
+            className={linkClass(isAllActive)}
+          >
+            All
+          </a>
           {categories.map((cat) => (
             <a
               key={cat.id}
               href={`/category/${cat.slug}`}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted"
+              className={linkClass(cat.slug === activeCategory)}
             >
               {cat.name}
             </a>
           ))}
         </div>
+      </div>
+      <div>
+        <h3 className="text-sm font-medium mb-2">Pricing</h3>
+        <PricingButtons />
       </div>
       <div>
         <h3 className="text-sm font-medium mb-2">Time</h3>
@@ -40,14 +62,6 @@ export function Sidebar({ categories }: { categories: Category[] }) {
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="lg:hidden fixed top-[18px] right-4 z-40 p-2 rounded-md border bg-background"
-        aria-label="Open filters"
-      >
-        <Menu className="h-5 w-5" />
-      </button>
-
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
