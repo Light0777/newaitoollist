@@ -1,7 +1,19 @@
+import type { Metadata } from "next"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { SubmitToolForm } from "@/components/submit-tool-form"
 import { getCategories } from "@/actions/tools"
+
+export const metadata: Metadata = {
+  title: "Submit an AI Tool | NewAIToolList",
+  description:
+    "Submit your AI coding tool to be listed in our directory. Reach developers looking for AI-powered coding solutions.",
+  openGraph: {
+    title: "Submit an AI Tool | NewAIToolList",
+    description:
+      "Submit your AI coding tool to be listed in our directory. Reach developers looking for AI-powered coding solutions.",
+  },
+}
 
 export default async function SubmitPage() {
   const categories = await getCategories()

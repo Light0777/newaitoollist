@@ -20,9 +20,14 @@ export async function generateMetadata({
     .join(" ")
     .replace(/\bAi\b/g, "AI")
 
+  const baseUrl = "https://newaitoollist.com"
+
   return {
     title: `${categoryName} Tools | NewAIToolList`,
     description: `Browse the best ${categoryName.toLowerCase()} AI tools. Discover new AI tools for ${categoryName.toLowerCase()}.`,
+    alternates: {
+      canonical: `${baseUrl}/category/${slug}`,
+    },
     openGraph: {
       title: `${categoryName} Tools | NewAIToolList`,
       description: `Browse the best ${categoryName.toLowerCase()} AI tools. Discover new AI tools for ${categoryName.toLowerCase()}.`,

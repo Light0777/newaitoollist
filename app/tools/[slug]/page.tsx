@@ -39,6 +39,9 @@ export async function generateMetadata({
   return {
     title: `${tool.name} - ${categoryDisplay} | NewAIToolList`,
     description: `Discover ${tool.name}, an ${categoryDisplay.toLowerCase()} tool. ${tool.description}`,
+    alternates: {
+      canonical: `${baseUrl}/tools/${tool.slug}`,
+    },
     openGraph: {
       title: `${tool.name} - ${categoryDisplay} | NewAIToolList`,
       description: `Discover ${tool.name}, an ${categoryDisplay.toLowerCase()} tool. ${tool.description}`,

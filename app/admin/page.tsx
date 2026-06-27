@@ -1,5 +1,11 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+
+export const metadata: Metadata = {
+  title: "Admin Dashboard | NewAIToolList",
+  robots: { index: false, follow: false },
+}
 import {
   Card,
   CardContent,

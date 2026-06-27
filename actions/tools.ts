@@ -4,6 +4,9 @@ import { getSupabase } from "@/lib/supabase"
 import type { Tool, Category } from "@/types"
 
 import { PRICING_MAP } from "@/lib/pricing"
+import { seededShuffle, applyRecencyBoost } from "@/lib/shuffle"
+
+const ALLOWED_CATEGORIES = ["ai-agents", "coding-ai", "productivity-ai"]
 
 const TOOL_COLUMNS =
   "id, name, slug, description, website_url, category, pricing, tags, logo_url, created_at, embedding_status, shuffle_order"
@@ -148,6 +151,7 @@ export async function getNewestTools(limit = 4): Promise<Tool[]> {
   const { data } = await supabase
     .from("tools")
     .select(TOOL_COLUMNS)
+    .in("category", ALLOWED_CATEGORIES)
     .order("created_at", { ascending: false })
     .limit(limit)
 
@@ -166,10 +170,24 @@ export async function getLatestTools(
   const dateFilter = getDateFilter(period)
   const pricingValue = pricing ? PRICING_MAP[pricing] : null
 
+  if (!cursor) {
+    // Fetch all tools and shuffle in-memory with daily seed
+    let q = supabase.from("tools").select(TOOL_COLUMNS).in("category", ALLOWED_CATEGORIES)
+    if (dateFilter) q = q.gte("created_at", dateFilter.toISOString())
+    if (pricingValue) q = q.eq("pricing", pricingValue)
+
+    const { data, error } = await q
+    if (error || !data) return { data: [], hasMore: false, nextCursor: null }
+
+    const seed = new Date().toISOString().split("T")[0]
+    const shuffled = applyRecencyBoost(seededShuffle(data, seed))
+    return { data: shuffled.slice(0, limit), hasMore: false, nextCursor: null }
+  }
+
   return runShufflePaginatedQuery(
     supabase,
     (query) => {
-      let q = query
+      let q = query.in("category", ALLOWED_CATEGORIES)
       if (dateFilter) {
         q = q.gte("created_at", dateFilter.toISOString())
       }
@@ -195,6 +213,19 @@ export async function getToolsByCategory(
 
   const pricingValue = pricing ? PRICING_MAP[pricing] : null
   const dateFilter = getDateFilter(period)
+
+  if (!cursor) {
+    let q = supabase.from("tools").select(TOOL_COLUMNS).eq("category", slug)
+    if (dateFilter) q = q.gte("created_at", dateFilter.toISOString())
+    if (pricingValue) q = q.eq("pricing", pricingValue)
+
+    const { data, error } = await q
+    if (error || !data) return { data: [], hasMore: false, nextCursor: null }
+
+    const seed = new Date().toISOString().split("T")[0]
+    const shuffled = applyRecencyBoost(seededShuffle(data, seed))
+    return { data: shuffled.slice(0, limit), hasMore: false, nextCursor: null }
+  }
 
   return runShufflePaginatedQuery(
     supabase,
@@ -229,7 +260,7 @@ export async function searchTools(
   return runDatePaginatedQuery(
     supabase,
     (query) => {
-      let q = query.or(
+      let q = query.in("category", ALLOWED_CATEGORIES).or(
         `name.ilike.%${queryStr}%,description.ilike.%${queryStr}%,tags.cs.{${queryStr}}`
       )
       if (dateFilter) {
@@ -284,8 +315,10 @@ export async function getSimilarTools(
     p_limit: limit,
   })
 
+  const allowedSet = new Set(ALLOWED_CATEGORIES)
   if (!error && data && data.length > 0) {
-    return data as Tool[]
+    const filtered = (data as Tool[]).filter((t) => allowedSet.has(t.category))
+    if (filtered.length > 0) return filtered
   }
 
   if (error) {
@@ -318,6 +351,7 @@ export async function getAllToolSlugsForSitemap(): Promise<
     const { data } = await supabase
       .from("tools")
       .select("slug, created_at")
+      .in("category", ALLOWED_CATEGORIES)
       .order("created_at", { ascending: false })
       .range(offset, offset + batchSize - 1)
 
