@@ -6,7 +6,17 @@ import type { Tool, Category } from "@/types"
 import { PRICING_MAP } from "@/lib/pricing"
 import { seededShuffle, applyRecencyBoost } from "@/lib/shuffle"
 
-const ALLOWED_CATEGORIES = ["ai-agents", "coding-ai", "productivity-ai"]
+const ALLOWED_CATEGORIES = [
+  "ai-agents",
+  "coding-ai",
+  "productivity-ai",
+  "ai-coding-agents",
+  "ai-code-editors",
+  "code-generation",
+  "debugging",
+  "code-review",
+  "testing",
+]
 
 const TOOL_COLUMNS =
   "id, name, slug, description, website_url, category, pricing, tags, logo_url, created_at, embedding_status, shuffle_order"
@@ -179,7 +189,7 @@ export async function getLatestTools(
     const { data, error } = await q
     if (error || !data) return { data: [], hasMore: false, nextCursor: null }
 
-    const seed = new Date().toISOString().split("T")[0]
+    const seed = Math.random().toString(36).slice(2)
     const shuffled = applyRecencyBoost(seededShuffle(data, seed))
     return { data: shuffled.slice(0, limit), hasMore: false, nextCursor: null }
   }
@@ -222,7 +232,7 @@ export async function getToolsByCategory(
     const { data, error } = await q
     if (error || !data) return { data: [], hasMore: false, nextCursor: null }
 
-    const seed = new Date().toISOString().split("T")[0]
+    const seed = Math.random().toString(36).slice(2)
     const shuffled = applyRecencyBoost(seededShuffle(data, seed))
     return { data: shuffled.slice(0, limit), hasMore: false, nextCursor: null }
   }
