@@ -14,10 +14,6 @@ const ALLOWED_CATEGORIES = [
 
 const API_KEY = process.env.GEMINI_API_KEY
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
 function buildPrompt(name: string, description: string, url: string): string {
   return `You are a curator for a directory of AI developer tools. Given the following tool info, decide if it is a developer-focused AI coding tool (code editors, coding agents, code generation, code review, debugging, testing, dev infrastructure). If it is NOT (e.g. it's a generic chatbot, image generator, video tool, marketing tool, or non-AI tool), respond with: {"rejected": true}
 
@@ -55,89 +51,67 @@ export async function filterAndExtract(
   }
 
   const prompt = buildPrompt(candidate.name, candidate.rawDescription, candidate.url)
-
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`
 
-  const retryDelays = [5000, 15000, 30000]
-  let lastError: string | null = null
-
-  for (let attempt = 0; attempt <= retryDelays.length; attempt++) {
-    let response: Response
-    try {
-      response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.1,
-            maxOutputTokens: 256,
-          },
-        }),
-      })
-    } catch (err) {
-      lastError = `Fetch error: ${err}`
-      if (attempt < retryDelays.length) {
-        console.log(`[gemini-filter] Network error for "${candidate.name}", retry ${attempt + 1}/${retryDelays.length} after ${retryDelays[attempt]}ms`)
-        await sleep(retryDelays[attempt])
-        continue
-      }
-      break
-    }
-
-    if (response.status === 429) {
-      lastError = `Rate limited (429)`
-      if (attempt < retryDelays.length) {
-        console.log(`[gemini-filter] Rate limited for "${candidate.name}", retry ${attempt + 1}/${retryDelays.length} after ${retryDelays[attempt]}ms`)
-        await sleep(retryDelays[attempt])
-        continue
-      }
-      break
-    }
-
-    if (!response.ok) {
-      const body = await response.text()
-      console.error(`[gemini-filter] API error ${response.status} for "${candidate.name}":`, body)
-      return { extracted: null, rejected: true }
-    }
-
-    const data = await response.json()
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
-
-    if (!text) {
-      console.error(`[gemini-filter] Empty response for "${candidate.name}"`)
-      return { extracted: null, rejected: true }
-    }
-
-    const parsed = parseJson(text)
-    if (!parsed) {
-      console.error(`[gemini-filter] Failed to parse Gemini response for "${candidate.name}": ${text}`)
-      return { extracted: null, rejected: true }
-    }
-
-    if (parsed.rejected === true) {
-      return { extracted: null, rejected: true }
-    }
-
-    const name = String(parsed.name || "").trim()
-    const description = String(parsed.description || "").trim()
-    const category = String(parsed.category || "").trim()
-    const pricing = String(parsed.pricing || "Freemium").trim()
-    const websiteUrl = String(parsed.websiteUrl || "").trim()
-
-    if (!name || !description || !category || !websiteUrl) {
-      console.error(`[gemini-filter] Missing required fields for "${candidate.name}":`, parsed)
-      return { extracted: null, rejected: true }
-    }
-
-    if (!ALLOWED_CATEGORIES.includes(category)) {
-      console.error(`[gemini-filter] Invalid category "${category}" for "${candidate.name}"`)
-      return { extracted: null, rejected: true }
-    }
-
-    return { extracted: { name, description, category, pricing, websiteUrl }, rejected: false }
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 256 },
+      }),
+    })
+  } catch (err) {
+    console.error(`[gemini-filter] Fetch error for "${candidate.name}":`, err)
+    return { extracted: null, rejected: true }
   }
 
-  console.error(`[gemini-filter] All retries exhausted for "${candidate.name}": ${lastError}`)
-  return { extracted: null, rejected: true }
+  if (response.status === 429) {
+    console.error(`[gemini-filter] Rate limited (429) for "${candidate.name}" — quota may be exhausted`)
+    return { extracted: null, rejected: true }
+  }
+
+  if (!response.ok) {
+    const body = await response.text()
+    console.error(`[gemini-filter] API error ${response.status} for "${candidate.name}":`, body)
+    return { extracted: null, rejected: true }
+  }
+
+  const data = await response.json()
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
+
+  if (!text) {
+    console.error(`[gemini-filter] Empty response for "${candidate.name}"`)
+    return { extracted: null, rejected: true }
+  }
+
+  const parsed = parseJson(text)
+  if (!parsed) {
+    console.error(`[gemini-filter] Failed to parse Gemini response for "${candidate.name}": ${text}`)
+    return { extracted: null, rejected: true }
+  }
+
+  if (parsed.rejected === true) {
+    return { extracted: null, rejected: true }
+  }
+
+  const name = String(parsed.name || "").trim()
+  const description = String(parsed.description || "").trim()
+  const category = String(parsed.category || "").trim()
+  const pricing = String(parsed.pricing || "Freemium").trim()
+  const websiteUrl = String(parsed.websiteUrl || "").trim()
+
+  if (!name || !description || !category || !websiteUrl) {
+    console.error(`[gemini-filter] Missing required fields for "${candidate.name}":`, parsed)
+    return { extracted: null, rejected: true }
+  }
+
+  if (!ALLOWED_CATEGORIES.includes(category)) {
+    console.error(`[gemini-filter] Invalid category "${category}" for "${candidate.name}"`)
+    return { extracted: null, rejected: true }
+  }
+
+  return { extracted: { name, description, category, pricing, websiteUrl }, rejected: false }
 }

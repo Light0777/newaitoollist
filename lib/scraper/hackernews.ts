@@ -3,17 +3,10 @@ import type { ScrapedCandidate } from "./types"
 const HN_SEARCH_URL = "https://hn.algolia.com/api/v1/search"
 
 const KEYWORDS = [
-  "AI coding",
-  "AI agent",
-  "code generation",
-  "AI IDE",
-  "code editor",
-  "debugging",
-  "code review",
-  "developer tool",
-  "dev tool",
-  "coding assistant",
-  "AI pair programmer",
+  "AI coding agent",
+  "AI code editor",
+  "code generation tool",
+  "AI developer tool",
 ]
 
 export async function fetchHackerNews(): Promise<ScrapedCandidate[]> {
