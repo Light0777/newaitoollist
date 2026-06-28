@@ -11,13 +11,17 @@ export async function HomepageSections() {
   const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
   const trending = await getTrendingTools(4)
-  const trendingIds = trending.map((t) => t.id)
+  const excludedIds = new Set(trending.map((t) => t.id))
+  const exclude = (ids: string[]) => [...excludedIds, ...ids]
 
-  const [todayTools, weekTools, monthTools] = await Promise.all([
-    getToolsInDateRange(dayAgo, undefined, 4, trendingIds),
-    getToolsInDateRange(weekAgo, dayAgo, 4, trendingIds),
-    getToolsInDateRange(monthAgo, weekAgo, 4, trendingIds),
-  ])
+  const todayTools = await getToolsInDateRange(dayAgo, undefined, 4, [...excludedIds])
+  const fallbackTools = todayTools.length > 0 ? [] : await getToolsInDateRange(new Date(0), undefined, 4, [...excludedIds])
+  const fallbackIds = fallbackTools.map((t) => t.id)
+
+  const weekTools = await getToolsInDateRange(weekAgo, dayAgo, 4, exclude(fallbackIds))
+  const weekIds = weekTools.map((t) => t.id)
+
+  const monthTools = await getToolsInDateRange(monthAgo, weekAgo, 4, exclude([...fallbackIds, ...weekIds]))
 
   return (
     <div className="space-y-12">
@@ -25,7 +29,7 @@ export async function HomepageSections() {
         <TrendingSection cards={trending} />
       )}
 
-      <TodaySection tools={todayTools} trending={trending} />
+      <TodaySection tools={todayTools} fallback={fallbackTools} />
 
       {weekTools.length > 0 && (
         <Section title="This Week" cards={weekTools} href="/?period=week" />
@@ -38,9 +42,9 @@ export async function HomepageSections() {
   )
 }
 
-function TodaySection({ tools, trending }: { tools: Tool[]; trending: Tool[] }) {
+function TodaySection({ tools, fallback }: { tools: Tool[]; fallback: Tool[] }) {
   const hasTools = tools.length > 0
-  const displayTools = hasTools ? tools : trending
+  const displayTools = hasTools ? tools : fallback
   const title = hasTools ? "Today" : "Latest Tools"
   const href = "/all"
 
