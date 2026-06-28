@@ -3,14 +3,14 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Sidebar } from "@/components/sidebar"
 import { ToolGridWithLoadMore, ToolGridSkeleton } from "@/components/tool-grid"
-import { getTrendingTools, getLatestTools, getCategories } from "@/actions/tools"
+import { getTrendingTools, getDateOrderedTools, getCategories } from "@/actions/tools"
 
 export const dynamic = "force-dynamic"
 
 async function AllToolsContent() {
   const [latestTools, { data, hasMore, nextCursor }] = await Promise.all([
     getTrendingTools(4),
-    getLatestTools(24),
+    getDateOrderedTools(24),
   ])
 
   return (

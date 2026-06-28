@@ -154,6 +154,46 @@ async function runDatePaginatedQuery(
   return { data: tools, hasMore, nextCursor }
 }
 
+export async function getDateOrderedTools(
+  limit = 24,
+  cursor?: string | null,
+  options?: {
+    categorySlug?: string
+    searchQuery?: string
+    pricing?: string
+    period?: string
+  }
+): Promise<PaginatedResult<Tool>> {
+  const supabase = getClient()
+  if (!supabase) return { data: [], hasMore: false, nextCursor: null }
+
+  const dateFilter = options?.period ? getDateFilter(options.period) : null
+  const pricingValue = options?.pricing ? PRICING_MAP[options.pricing] : null
+
+  return runDatePaginatedQuery(
+    supabase,
+    (query) => {
+      let q = query as any
+      if (options?.categorySlug) {
+        q = q.eq("category", options.categorySlug)
+      } else {
+        q = q.in("category", ALLOWED_CATEGORIES)
+      }
+      if (dateFilter) q = q.gte("created_at", dateFilter.toISOString())
+      if (pricingValue) q = q.eq("pricing", pricingValue)
+      if (options?.searchQuery) {
+        const term = options.searchQuery
+        q = q.or(
+          `name.ilike.%${term}%,description.ilike.%${term}%`
+        )
+      }
+      return q
+    },
+    limit,
+    cursor
+  )
+}
+
 export async function getTrendingTools(limit = 4): Promise<Tool[]> {
   const supabase = getClient()
   if (!supabase) return []

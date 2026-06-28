@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from "react"
 import Link from "next/link"
 import { ToolCard, ToolCardSkeleton } from "@/components/tool-card"
 import { ToolIcon } from "@/components/tool-icon"
-import { getLatestTools, searchTools, getToolsByCategory } from "@/actions/tools"
+import { getDateOrderedTools } from "@/actions/tools"
 import type { Tool } from "@/types"
 import type { PaginatedResult } from "@/actions/tools"
 
@@ -134,14 +134,12 @@ export function ToolGridWithLoadMore({
 
     try {
       const PAGE_SIZE = 24
-      let result: PaginatedResult<Tool>
-      if (categorySlug) {
-        result = await getToolsByCategory(categorySlug, PAGE_SIZE, cursor, pricing, period)
-      } else if (searchQuery) {
-        result = await searchTools(searchQuery, PAGE_SIZE, cursor, period, pricing)
-      } else {
-        result = await getLatestTools(PAGE_SIZE, cursor, period, pricing)
-      }
+      const result: PaginatedResult<Tool> = await getDateOrderedTools(PAGE_SIZE, cursor, {
+        categorySlug,
+        searchQuery: searchQuery || undefined,
+        pricing,
+        period,
+      })
 
       if (gen !== generationRef.current) return
 
