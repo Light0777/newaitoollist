@@ -64,7 +64,10 @@ async function processSource(
   if (newCandidates.length === 0) return summary
 
   // Step 4: Gemini filter & extract
-  for (const c of newCandidates) {
+  for (let i = 0; i < newCandidates.length; i++) {
+    const c = newCandidates[i]
+    // 1.5s delay between calls to avoid per-minute rate limits
+    if (i > 0) await new Promise((r) => setTimeout(r, 1500))
     const { extracted, rejected } = await filterAndExtract(c)
     if (rejected) {
       summary.rejectedByFilter++
