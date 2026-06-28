@@ -4,9 +4,10 @@ import { Footer } from "@/components/footer"
 import { Search } from "@/components/search"
 import { Sidebar } from "@/components/sidebar"
 import { ToolGridWithLoadMore, ToolGridSkeleton } from "@/components/tool-grid"
-import { getNewestTools, getLatestTools, searchTools, getCategories } from "@/actions/tools"
+import { HomepageSections, HomepageSectionsSkeleton } from "@/components/homepage-sections"
+import { getLatestTools, searchTools, getCategories } from "@/actions/tools"
 
-async function ToolsGridContent({
+async function FilteredContent({
   searchQuery,
   period,
   pricing,
@@ -15,9 +16,6 @@ async function ToolsGridContent({
   period?: string
   pricing?: string
 }) {
-  // 4 globally newest tools (unaffected by filters), shown in a dedicated section
-  const latestTools = searchQuery ? [] : await getNewestTools(4)
-
   if (searchQuery) {
     const { data, hasMore, nextCursor } = await searchTools(
       searchQuery,
@@ -29,7 +27,6 @@ async function ToolsGridContent({
     return (
       <ToolGridWithLoadMore
         key={`search-${searchQuery}`}
-        latestTools={latestTools}
         initialTools={data}
         initialHasMore={hasMore}
         initialCursor={nextCursor}
@@ -45,7 +42,6 @@ async function ToolsGridContent({
   return (
     <ToolGridWithLoadMore
       key="home"
-      latestTools={latestTools}
       initialTools={data}
       initialHasMore={hasMore}
       initialCursor={nextCursor}
@@ -62,6 +58,7 @@ export default async function Home({
 }) {
   const { search, period, pricing } = await searchParams
   const categories = await getCategories()
+  const hasFilters = search || period || pricing
 
   return (
     <>
@@ -76,9 +73,15 @@ export default async function Home({
         <div className="flex gap-8">
           <Sidebar categories={categories} />
           <section className="flex-1 min-w-0">
-            <Suspense fallback={<ToolGridSkeleton />}>
-              <ToolsGridContent searchQuery={search} period={period} pricing={pricing} />
-            </Suspense>
+            {hasFilters ? (
+              <Suspense fallback={<ToolGridSkeleton />}>
+                <FilteredContent searchQuery={search} period={period} pricing={pricing} />
+              </Suspense>
+            ) : (
+              <Suspense fallback={<HomepageSectionsSkeleton />}>
+                <HomepageSections />
+              </Suspense>
+            )}
           </section>
         </div>
       </main>

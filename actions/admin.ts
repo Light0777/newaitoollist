@@ -22,7 +22,8 @@ function encodeCursor(offset: number): string {
 }
 
 export async function getAdminTools(
-  cursor?: string | null
+  cursor?: string | null,
+  search?: string
 ): Promise<AdminPaginatedResult> {
   const { supabase } = await requireAdmin()
 
@@ -35,9 +36,15 @@ export async function getAdminTools(
     offset = decoded.offset
   }
 
-  const { data, error } = await supabase
+  let q = supabase
     .from("tools")
     .select("*")
+
+  if (search) {
+    q = q.ilike("name", `%${search}%`)
+  }
+
+  const { data, error } = await q
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
     .range(offset, offset + fetchLimit - 1)
@@ -86,10 +93,13 @@ export async function createTool(formData: FormData): Promise<ActionResult> {
     .split(",")
     .map((t) => t.trim())
     .filter(Boolean)
+  const trending = formData.get("trending") === "on"
+  const trendingPositionRaw = formData.get("trending_position") as string
+  const trending_position = trendingPositionRaw ? Number(trendingPositionRaw) : null
 
   const { data: inserted, error } = await supabase
     .from("tools")
-    .insert({ name, slug, description, website_url, category, pricing, tags })
+    .insert({ name, slug, description, website_url, category, pricing, tags, trending, trending_position })
     .select("id")
 
   if (error) {
@@ -124,6 +134,9 @@ export async function updateTool(
     .split(",")
     .map((t) => t.trim())
     .filter(Boolean)
+  const trending = formData.get("trending") === "on"
+  const trendingPositionRaw = formData.get("trending_position") as string
+  const trending_position = trendingPositionRaw ? Number(trendingPositionRaw) : null
 
   const { error } = await supabase
     .from("tools")
@@ -135,6 +148,8 @@ export async function updateTool(
       category,
       pricing,
       tags,
+      trending,
+      trending_position,
     })
     .eq("id", id)
 

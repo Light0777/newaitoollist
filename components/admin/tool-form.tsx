@@ -148,6 +148,39 @@ export function ToolForm({
           />
         </div>
 
+        <fieldset className="border rounded-lg p-4 space-y-3">
+          <legend className="text-sm font-medium px-1">Trending</legend>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              name="trending"
+              defaultChecked={tool?.trending === true}
+              className="h-4 w-4 rounded border-input"
+            />
+            <span className="text-sm">Mark as trending</span>
+          </label>
+          <div className="space-y-2">
+            <Label>Position</Label>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4].map((pos) => (
+                <label
+                  key={pos}
+                  className="flex items-center justify-center h-10 w-10 rounded-md border border-input bg-transparent text-sm font-medium cursor-pointer has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:checked]:border-primary hover:bg-muted"
+                >
+                  <input
+                    type="radio"
+                    name="trending_position"
+                    value={pos}
+                    defaultChecked={tool?.trending_position === pos}
+                    className="sr-only"
+                  />
+                  {pos}
+                </label>
+              ))}
+            </div>
+          </div>
+        </fieldset>
+
         {state && !state.success && state.error && (
           <p className="text-sm text-destructive">{state.error}</p>
         )}

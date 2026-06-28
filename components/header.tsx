@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { X, Sun, Moon } from "lucide-react"
+import { X, Sun, Moon, Home } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
@@ -31,6 +31,9 @@ export function Header() {
             <Sun className="h-5 w-5 hidden dark:block" />
             <Moon className="h-5 w-5 block dark:hidden" />
           </button>
+          <Link href="/" className="p-2 rounded-md hover:bg-muted" aria-label="Home">
+            <Home className="h-5 w-5" />
+          </Link>
           <Link href="/submit" className="hidden lg:block">
             <Button variant="outline" size="sm">
               Submit Tool

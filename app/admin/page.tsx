@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -15,11 +16,17 @@ import {
 import { requireAdmin } from "@/lib/admin"
 import { getAdminTools } from "@/actions/admin"
 import { AdminToolList } from "@/components/admin-tool-list"
+import { AdminSearch } from "@/components/admin-search"
 import { Plus, Inbox } from "lucide-react"
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>
+}) {
   const { supabase, user } = await requireAdmin()
-  const { data, hasMore, nextCursor } = await getAdminTools()
+  const { q } = await searchParams
+  const { data, hasMore, nextCursor } = await getAdminTools(null, q)
 
   const { count } = await supabase
     .from("tools")
@@ -59,9 +66,16 @@ export default async function AdminPage() {
       <Card>
         <CardHeader>
           <CardTitle>Tools {count !== null && <span className="text-muted-foreground font-normal text-lg">({count})</span>}</CardTitle>
+          <div className="mt-2">
+            <Suspense>
+              <AdminSearch />
+            </Suspense>
+          </div>
         </CardHeader>
         <CardContent>
           <AdminToolList
+            key={q || ""}
+            searchQuery={q || ""}
             initialTools={data}
             initialHasMore={hasMore}
             initialCursor={nextCursor}

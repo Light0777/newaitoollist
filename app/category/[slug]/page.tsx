@@ -6,7 +6,7 @@ import { Footer } from "@/components/footer"
 import { Sidebar } from "@/components/sidebar"
 import { ToolGridWithLoadMore } from "@/components/tool-grid"
 import { ArrowLeft } from "lucide-react"
-import { getNewestTools, getToolsByCategory, getCategories } from "@/actions/tools"
+import { getTrendingTools, getToolsByCategory, getCategories } from "@/actions/tools"
 
 export async function generateMetadata({
   params,
@@ -51,8 +51,8 @@ export default async function CategoryPage({
     notFound()
   }
 
-  const latestTools = await getNewestTools(4)
-  const { data, hasMore, nextCursor } = await getToolsByCategory(slug, 9999, null, pricing, period)
+  const latestTools = await getTrendingTools(4)
+  const { data, hasMore, nextCursor } = await getToolsByCategory(slug, 24, null, pricing, period)
 
   return (
     <>

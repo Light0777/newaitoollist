@@ -11,6 +11,8 @@ export interface Tool {
   created_at: string
   embedding_status?: "pending" | "done" | "failed"
   shuffle_order?: number
+  trending?: boolean
+  trending_position?: number | null
 }
 
 export interface Category {

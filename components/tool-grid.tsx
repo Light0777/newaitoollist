@@ -133,13 +133,14 @@ export function ToolGridWithLoadMore({
     setError(null)
 
     try {
+      const PAGE_SIZE = 24
       let result: PaginatedResult<Tool>
       if (categorySlug) {
-        result = await getToolsByCategory(categorySlug, 9999, cursor, pricing, period)
+        result = await getToolsByCategory(categorySlug, PAGE_SIZE, cursor, pricing, period)
       } else if (searchQuery) {
-        result = await searchTools(searchQuery, 9999, cursor, period, pricing)
+        result = await searchTools(searchQuery, PAGE_SIZE, cursor, period, pricing)
       } else {
-        result = await getLatestTools(9999, cursor, period, pricing)
+        result = await getLatestTools(PAGE_SIZE, cursor, period, pricing)
       }
 
       if (gen !== generationRef.current) return
@@ -222,7 +223,7 @@ export function ToolGridWithLoadMore({
     <div>
       {latestTools && latestTools.length > 0 && (
         <div className="mb-10 p-6 border rounded-lg">
-          <h2 className="text-2xl font-semibold mb-4">Latest AI Tools</h2>
+          <h2 className="text-2xl font-semibold mb-4">Trending 🔥🔥</h2>
 
           {/* Mobile: icons row */}
           <div className="flex sm:hidden items-center justify-between">

@@ -13,7 +13,7 @@ import type { Category } from "@/types"
 export function Sidebar({ categories }: { categories: Category[] }) {
   const { open, setOpen } = useSidebar()
   const pathname = usePathname()
-  const isAllActive = pathname === "/"
+  const isAllActive = pathname === "/all"
   const activeCategory = pathname.startsWith("/category/") ? pathname.replace("/category/", "") : null
 
   const linkClass = (isActive: boolean) =>
@@ -33,7 +33,7 @@ export function Sidebar({ categories }: { categories: Category[] }) {
         <h3 className="text-sm font-medium mb-2">Categories</h3>
         <div className="flex flex-col gap-1.5">
           <a
-            href="/"
+            href="/all"
             className={linkClass(isAllActive)}
           >
             All

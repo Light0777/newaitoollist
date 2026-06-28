@@ -154,17 +154,64 @@ async function runDatePaginatedQuery(
   return { data: tools, hasMore, nextCursor }
 }
 
-export async function getNewestTools(limit = 4): Promise<Tool[]> {
+export async function getTrendingTools(limit = 4): Promise<Tool[]> {
   const supabase = getClient()
   if (!supabase) return []
 
-  const { data } = await supabase
+  const manual: Tool[] = []
+  const { data: trending } = await supabase
     .from("tools")
     .select(TOOL_COLUMNS)
     .in("category", ALLOWED_CATEGORIES)
-    .order("created_at", { ascending: false })
+    .eq("trending", true)
+    .order("trending_position", { ascending: true })
     .limit(limit)
 
+  if (trending) manual.push(...trending)
+
+  const remaining = limit - manual.length
+
+  if (remaining > 0) {
+    let q = supabase
+      .from("tools")
+      .select(TOOL_COLUMNS)
+      .in("category", ALLOWED_CATEGORIES)
+      .order("created_at", { ascending: false })
+      .limit(remaining)
+
+    if (manual.length > 0) {
+      const ids = manual.map((t) => t.id)
+      q = q.not("id", "in", `(${ids.join(",")})`)
+    }
+
+    const { data: fill } = await q
+    if (fill) manual.push(...fill)
+  }
+
+  return manual.slice(0, limit)
+}
+
+export async function getToolsInDateRange(
+  gte: Date,
+  lt?: Date,
+  limit = 4,
+  excludeIds?: string[]
+): Promise<Tool[]> {
+  const supabase = getClient()
+  if (!supabase) return []
+
+  let q = supabase
+    .from("tools")
+    .select(TOOL_COLUMNS)
+    .in("category", ALLOWED_CATEGORIES)
+    .gte("created_at", gte.toISOString())
+  if (lt) q = q.lt("created_at", lt.toISOString())
+  if (excludeIds && excludeIds.length > 0) {
+    q = q.not("id", "in", `(${excludeIds.join(",")})`)
+  }
+  q = q.order("created_at", { ascending: false }).limit(limit)
+
+  const { data } = await q
   return data || []
 }
 

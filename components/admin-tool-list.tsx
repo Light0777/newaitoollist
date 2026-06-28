@@ -18,12 +18,14 @@ import type { Tool } from "@/types"
 import type { AdminPaginatedResult } from "@/actions/admin"
 
 interface AdminToolListProps {
+  searchQuery?: string
   initialTools: Tool[]
   initialHasMore: boolean
   initialCursor: string | null
 }
 
 export function AdminToolList({
+  searchQuery = "",
   initialTools,
   initialHasMore,
   initialCursor,
@@ -40,7 +42,7 @@ export function AdminToolList({
     setError(null)
 
     try {
-      const result: AdminPaginatedResult = await getAdminTools(cursor)
+      const result: AdminPaginatedResult = await getAdminTools(cursor, searchQuery)
       setTools((prev) => {
         const existingIds = new Set(prev.map((t) => t.id))
         const newTools = result.data.filter((t) => !existingIds.has(t.id))
